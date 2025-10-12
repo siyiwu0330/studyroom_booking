@@ -1,0 +1,18 @@
+# Go
+**/*.test
+**/*.out
+**/*.log
+bin/
+build/
+dist/
+vendor/
+
+# VCS/IDE
+.git
+.gitignore
+.idea
+.vscode
+.DS_Store
+
+# Node/Yarn/etc (if any)
+node_modules/
