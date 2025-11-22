@@ -8,6 +8,8 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.42.0
+	google.golang.org/grpc v1.77.0
+	google.golang.org/protobuf v1.36.9
 )
 
 require (

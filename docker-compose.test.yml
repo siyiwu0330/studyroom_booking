@@ -1,0 +1,16 @@
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: studyroom-test
+    # Don't mount volumes that would override generated proto files
+    # volumes:
+    #   - ./test:/app/test:ro
+    #   - ./internal:/app/internal:ro
+    #   - ./pkg:/app/pkg:ro
+    environment:
+      - CGO_ENABLED=0
+    command: ["/bin/sh", "/app/test/docker_test.sh"]
+

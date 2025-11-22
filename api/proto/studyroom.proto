@@ -1,0 +1,163 @@
+syntax = "proto3";
+
+package studyroom;
+
+option go_package = "studyroom/api/proto";
+
+// ===== Authentication Service =====
+service AuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc Me(MeRequest) returns (MeResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  bool success = 1;
+  string session_token = 2;
+  string error = 3;
+}
+
+message LogoutRequest {
+  string session_token = 1;
+}
+
+message LogoutResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message MeRequest {
+  string session_token = 1;
+}
+
+message MeResponse {
+  string id = 1;
+  string email = 2;
+  bool is_admin = 3;
+  string error = 4;
+}
+
+// ===== Booking Service =====
+service BookingService {
+  rpc CreateBooking(CreateBookingRequest) returns (CreateBookingResponse);
+  rpc CancelBooking(CancelBookingRequest) returns (CancelBookingResponse);
+  rpc JoinWaitlist(JoinWaitlistRequest) returns (JoinWaitlistResponse);
+}
+
+message CreateBookingRequest {
+  string session_token = 1;
+  string room_id = 2;
+  string start = 3;  // RFC3339
+  string end = 4;    // RFC3339
+}
+
+message CreateBookingResponse {
+  bool success = 1;
+  string booking_id = 2;
+  string error = 3;
+}
+
+message CancelBookingRequest {
+  string session_token = 1;
+  string booking_id = 2;
+}
+
+message CancelBookingResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message JoinWaitlistRequest {
+  string session_token = 1;
+  string room_id = 2;
+  string start = 3;
+  string end = 4;
+}
+
+message JoinWaitlistResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// ===== Search Service =====
+service SearchService {
+  rpc SearchRooms(SearchRoomsRequest) returns (SearchRoomsResponse);
+}
+
+message SearchRoomsRequest {
+  string session_token = 1;
+  string start = 2;  // RFC3339
+  string end = 3;    // RFC3339
+  int32 min_capacity = 4;
+}
+
+message SearchRoomsResponse {
+  repeated Room rooms = 1;
+  string error = 2;
+}
+
+message Room {
+  string id = 1;
+  string name = 2;
+  int32 capacity = 3;
+}
+
+// ===== Admin Service =====
+service AdminService {
+  rpc CreateRoom(CreateRoomRequest) returns (CreateRoomResponse);
+  rpc ListRooms(ListRoomsRequest) returns (ListRoomsResponse);
+  rpc SetRoomSchedule(SetRoomScheduleRequest) returns (SetRoomScheduleResponse);
+}
+
+message CreateRoomRequest {
+  string session_token = 1;
+  string name = 2;
+  int32 capacity = 3;
+}
+
+message CreateRoomResponse {
+  bool success = 1;
+  string room_id = 2;
+  string error = 3;
+}
+
+message ListRoomsRequest {
+  string session_token = 1;
+}
+
+message ListRoomsResponse {
+  repeated Room rooms = 1;
+  string error = 2;
+}
+
+message SetRoomScheduleRequest {
+  string session_token = 1;
+  string room_id = 2;
+  string start = 3;
+  string end = 4;
+  bool is_open = 5;
+}
+
+message SetRoomScheduleResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+
+

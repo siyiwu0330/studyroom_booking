@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package twopc;
+
+option go_package = "studyroom/api/proto";
+
+// 2PC Transaction Coordinator Service
+// Q1: Voting Phase - Prepare is vote-request, PrepareResponse is vote-commit/vote-abort
+// Q2: Decision Phase - Commit is global-commit, Abort is global-abort
+service TwoPCService {
+  // Q1: Voting Phase
+  // Prepare = vote-request: Coordinator sends vote-request to participants
+  // PrepareResponse.can_commit=true = vote-commit: Participant votes to commit
+  // PrepareResponse.can_commit=false = vote-abort: Participant votes to abort
+  rpc Prepare(PrepareRequest) returns (PrepareResponse);
+  
+  // Q2: Decision Phase
+  // Commit = global-commit: Coordinator sends global-commit to all participants
+  rpc Commit(CommitRequest) returns (CommitResponse);
+  
+  // Q2: Decision Phase
+  // Abort = global-abort: Coordinator sends global-abort to all participants
+  rpc Abort(AbortRequest) returns (AbortResponse);
+}
+
+message PrepareRequest {
+  string transaction_id = 1;
+  repeated Participant participants = 2;
+  string operation = 3;  // JSON encoded operation
+}
+
+message PrepareResponse {
+  bool can_commit = 1;
+  string error = 2;
+}
+
+message CommitRequest {
+  string transaction_id = 1;
+}
+
+message CommitResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message AbortRequest {
+  string transaction_id = 1;
+}
+
+message AbortResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message Participant {
+  string node_id = 1;
+  string address = 2;
+}
+
+
+

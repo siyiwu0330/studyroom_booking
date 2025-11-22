@@ -1,0 +1,60 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/app
+/bin
+
+# Go workspace file
+go.work
+
+# Generated Protocol Buffer files (will be generated during build)
+# Uncomment if you want to exclude generated files
+# api/proto/*.pb.go
+# api/proto/*_grpc.pb.go
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker volumes and data
+mongo_data/
+redis_data/
+*.log
+
+# Test coverage
+*.coverprofile
+coverage.html
+coverage.out
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+*.a
+
+# Local development
+local/
+dev/
+

@@ -1,0 +1,132 @@
+services:
+  # Node 1
+  app-node1:
+    build:
+      context: .
+      dockerfile: Dockerfile-grpc
+    restart: unless-stopped
+    depends_on: [mongo, redis]
+    expose: ["50051", "50052"]
+    environment:
+      NODE_ID: "node1"
+      GRPC_PORT: "50051"
+      RAFT_PORT: "50052"
+      PEERS: "node1:app-node1:50052,node2:app-node2:50052,node3:app-node3:50052,node4:app-node4:50052,node5:app-node5:50052"
+      MONGODB_URI: "mongodb://root:example@mongo:27017/?authSource=admin"
+      MONGODB_DB: "studyroom"
+      REDIS_ADDR: "redis:6379"
+    networks:
+      - studyroom-net
+
+  # Node 2
+  app-node2:
+    build:
+      context: .
+      dockerfile: Dockerfile-grpc
+    restart: unless-stopped
+    depends_on: [mongo, redis]
+    expose: ["50051", "50052"]
+    environment:
+      NODE_ID: "node2"
+      GRPC_PORT: "50051"
+      RAFT_PORT: "50052"
+      PEERS: "node1:app-node1:50052,node2:app-node2:50052,node3:app-node3:50052,node4:app-node4:50052,node5:app-node5:50052"
+      MONGODB_URI: "mongodb://root:example@mongo:27017/?authSource=admin"
+      MONGODB_DB: "studyroom"
+      REDIS_ADDR: "redis:6379"
+    networks:
+      - studyroom-net
+
+  # Node 3
+  app-node3:
+    build:
+      context: .
+      dockerfile: Dockerfile-grpc
+    restart: unless-stopped
+    depends_on: [mongo, redis]
+    expose: ["50051", "50052"]
+    environment:
+      NODE_ID: "node3"
+      GRPC_PORT: "50051"
+      RAFT_PORT: "50052"
+      PEERS: "node1:app-node1:50052,node2:app-node2:50052,node3:app-node3:50052,node4:app-node4:50052,node5:app-node5:50052"
+      MONGODB_URI: "mongodb://root:example@mongo:27017/?authSource=admin"
+      MONGODB_DB: "studyroom"
+      REDIS_ADDR: "redis:6379"
+    networks:
+      - studyroom-net
+
+  # Node 4
+  app-node4:
+    build:
+      context: .
+      dockerfile: Dockerfile-grpc
+    restart: unless-stopped
+    depends_on: [mongo, redis]
+    expose: ["50051", "50052"]
+    environment:
+      NODE_ID: "node4"
+      GRPC_PORT: "50051"
+      RAFT_PORT: "50052"
+      PEERS: "node1:app-node1:50052,node2:app-node2:50052,node3:app-node3:50052,node4:app-node4:50052,node5:app-node5:50052"
+      MONGODB_URI: "mongodb://root:example@mongo:27017/?authSource=admin"
+      MONGODB_DB: "studyroom"
+      REDIS_ADDR: "redis:6379"
+    networks:
+      - studyroom-net
+
+  # Node 5
+  app-node5:
+    build:
+      context: .
+      dockerfile: Dockerfile-grpc
+    restart: unless-stopped
+    depends_on: [mongo, redis]
+    expose: ["50051", "50052"]
+    environment:
+      NODE_ID: "node5"
+      GRPC_PORT: "50051"
+      RAFT_PORT: "50052"
+      PEERS: "node1:app-node1:50052,node2:app-node2:50052,node3:app-node3:50052,node4:app-node4:50052,node5:app-node5:50052"
+      MONGODB_URI: "mongodb://root:example@mongo:27017/?authSource=admin"
+      MONGODB_DB: "studyroom"
+      REDIS_ADDR: "redis:6379"
+    networks:
+      - studyroom-net
+
+  mongo:
+    image: mongo:7
+    container_name: studyroom-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: studyroom
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - studyroom-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: studyroom-redis
+    restart: unless-stopped
+    command: ["redis-server","--appendonly","yes"]
+    # Port mapping removed - containers access Redis via Docker network (redis:6379)
+    # If you need external access, uncomment the line below and change port:
+    # ports:
+    #   - "6380:6379"  # Use different host port to avoid conflicts
+    networks:
+      - studyroom-net
+
+volumes:
+  mongo_data:
+
+networks:
+  studyroom-net:
+    driver: bridge
+
+
+
