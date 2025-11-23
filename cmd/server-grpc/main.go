@@ -88,7 +88,8 @@ func main() {
 	defer raftNode.Stop()
 
 	// --- 2PC Coordinator ---
-	coordinator := twopc.NewCoordinator(raftNode, nodeID)
+	coordinatorAddress := "localhost:" + grpcPort
+	coordinator := twopc.NewCoordinator(raftNode, nodeID, coordinatorAddress)
 
 	// --- 2PC Participant ---
 	participant := twopc.NewParticipantNode(nodeID)
@@ -127,8 +128,8 @@ func main() {
 	raftServer := raft.NewRaftServer(raftNode)
 	proto.RegisterRaftServiceServer(grpcServer, raftServer)
 
-	// Register 2PC service
-	twopcServer := twopc.NewTwoPCServer(participant)
+	// Register 2PC service (with coordinator support for phase-to-phase gRPC)
+	twopcServer := twopc.NewTwoPCServerWithCoordinator(participant, coordinator)
 	proto.RegisterTwoPCServiceServer(grpcServer, twopcServer)
 
 	// Start gRPC server

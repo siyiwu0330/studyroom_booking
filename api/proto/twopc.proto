@@ -21,6 +21,10 @@ service TwoPCService {
   // Q2: Decision Phase
   // Abort = global-abort: Coordinator sends global-abort to all participants
   rpc Abort(AbortRequest) returns (AbortResponse);
+  
+  // Q2: Phase-to-Phase gRPC
+  // StartDecision: Voting phase calls decision phase via gRPC (even within same node)
+  rpc StartDecision(StartDecisionRequest) returns (StartDecisionResponse);
 }
 
 message PrepareRequest {
@@ -55,6 +59,16 @@ message AbortResponse {
 message Participant {
   string node_id = 1;
   string address = 2;
+}
+
+message StartDecisionRequest {
+  string transaction_id = 1;
+  bool all_voted_commit = 2;  // true if all participants voted commit, false if any voted abort
+}
+
+message StartDecisionResponse {
+  bool success = 1;
+  string error = 2;
 }
 
 

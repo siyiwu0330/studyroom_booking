@@ -44,14 +44,16 @@ type Coordinator struct {
 	mu           sync.RWMutex
 	raftNode     interface{ IsLeader() bool } // Interface to check if Raft leader
 	nodeID       string                        // Node ID for logging
+	address      string                        // Coordinator's own address for phase-to-phase gRPC
 }
 
 // NewCoordinator creates a new 2PC coordinator
-func NewCoordinator(raftNode interface{ IsLeader() bool }, nodeID string) *Coordinator {
+func NewCoordinator(raftNode interface{ IsLeader() bool }, nodeID string, address string) *Coordinator {
 	return &Coordinator{
 		transactions: make(map[string]*Transaction),
 		raftNode:    raftNode,
 		nodeID:     nodeID,
+		address:    address,
 	}
 }
 
@@ -258,15 +260,50 @@ func (c *Coordinator) ExecuteTransaction(ctx context.Context, transactionID stri
 		return err
 	}
 
-	// Prepare phase
+	// Prepare phase (Voting Phase)
 	canCommit, err := c.PreparePhase(ctx, transactionID)
 	if err != nil || !canCommit {
+		// If prepare fails, call decision phase via gRPC to abort
+		if err := c.callDecisionPhaseViaGRPC(ctx, transactionID, false); err != nil {
+			return fmt.Errorf("prepare phase failed and decision phase call failed: %v", err)
+		}
 		return fmt.Errorf("prepare phase failed: %v", err)
 	}
 
-	// Commit phase
-	if err := c.CommitPhase(ctx, transactionID); err != nil {
-		return fmt.Errorf("commit phase failed: %v", err)
+	// Decision phase: Call via gRPC (phase-to-phase communication)
+	if err := c.callDecisionPhaseViaGRPC(ctx, transactionID, true); err != nil {
+		return fmt.Errorf("decision phase failed: %v", err)
+	}
+
+	return nil
+}
+
+// callDecisionPhaseViaGRPC calls the decision phase via gRPC (phase-to-phase communication)
+func (c *Coordinator) callDecisionPhaseViaGRPC(ctx context.Context, transactionID string, allVotedCommit bool) error {
+	// Log: Phase Voting of Node <coordinator> sends RPC StartDecision to Phase Decision of Node <coordinator>
+	fmt.Printf("Phase Voting of Node %s sends RPC StartDecision to Phase Decision of Node %s\n", c.nodeID, c.nodeID)
+	
+	// Connect to decision phase via localhost gRPC
+	conn, err := grpc.Dial(c.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to connect to decision phase at %s: %v", c.address, err)
+	}
+	defer conn.Close()
+
+	client := pb.NewTwoPCServiceClient(conn)
+
+	req := &pb.StartDecisionRequest{
+		TransactionId:  transactionID,
+		AllVotedCommit: allVotedCommit,
+	}
+
+	resp, err := client.StartDecision(ctx, req)
+	if err != nil {
+		return fmt.Errorf("StartDecision RPC failed: %v", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("decision phase failed: %s", resp.Error)
 	}
 
 	return nil
@@ -377,5 +414,46 @@ func (c *Coordinator) GetTransactionState(transactionID string) (TransactionStat
 	txn.mu.RLock()
 	defer txn.mu.RUnlock()
 	return txn.State, nil
+}
+
+// StartDecision handles StartDecision RPC from voting phase (phase-to-phase gRPC)
+// Q2: Decision Phase - receives StartDecision from voting phase
+func (c *Coordinator) StartDecision(ctx context.Context, req *pb.StartDecisionRequest) (*pb.StartDecisionResponse, error) {
+	// Log: Phase Decision of Node <coordinator> runs RPC StartDecision called by Phase Voting of Node <coordinator>
+	fmt.Printf("Phase Decision of Node %s runs RPC StartDecision called by Phase Voting of Node %s\n", c.nodeID, c.nodeID)
+	
+	c.mu.RLock()
+	_, exists := c.transactions[req.TransactionId]
+	c.mu.RUnlock()
+
+	if !exists {
+		return &pb.StartDecisionResponse{
+			Success: false,
+			Error:   fmt.Sprintf("transaction %s not found", req.TransactionId),
+		}, nil
+	}
+
+	// Execute decision phase based on voting results
+	if req.AllVotedCommit {
+		// All participants voted commit → send global-commit
+		if err := c.CommitPhase(ctx, req.TransactionId); err != nil {
+			return &pb.StartDecisionResponse{
+				Success: false,
+				Error:   fmt.Sprintf("commit phase failed: %v", err),
+			}, nil
+		}
+	} else {
+		// At least one participant voted abort → send global-abort
+		if err := c.AbortPhase(ctx, req.TransactionId); err != nil {
+			return &pb.StartDecisionResponse{
+				Success: false,
+				Error:   fmt.Sprintf("abort phase failed: %v", err),
+			}, nil
+		}
+	}
+
+	return &pb.StartDecisionResponse{
+		Success: true,
+	}, nil
 }
 
