@@ -111,7 +111,7 @@ func Test2PCAbortOnPrepareFailure(t *testing.T) {
 
 // Test2PCConcurrentTransactions tests concurrent 2PC transactions
 func Test2PCConcurrentTransactions(t *testing.T) {
-	coordinator := twopc.NewCoordinator(nil, "test-node")
+	coordinator := twopc.NewCoordinator(nil, "test-node", "localhost:50051")
 
 	txn1 := "txn-concurrent-1"
 	txn2 := "txn-concurrent-2"
